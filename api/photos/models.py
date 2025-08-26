@@ -1,20 +1,24 @@
+"""
+defines the database schema, creates three main database tables that work together to manage photo library
+"""
+
 from django.db import models
 from django.utils import timezone
 import os
 
-
+# Simple categorization system for photos
 class Tag(models.Model):
     """Model for photo tags like 'portrait', 'landscape', etc."""
     name = models.CharField(max_length=50, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
+    def __str__(self): # tags display as their name in admin interface
         return self.name
 
-    class Meta:
+    class Meta: # sorts tags alphabetically
         ordering = ['name']
 
-
+# Stores comprehensive metadata about each photo file
 class Photo(models.Model):
     """Model for storing photo metadata and information."""
     
@@ -68,16 +72,16 @@ class Photo(models.Model):
         image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.raw', '.cr2', '.nef']
         return self.file_extension in image_extensions
     
-    class Meta:
+    class Meta: # Default sort by capture date then by date added
         ordering = ['-date_captured', '-date_added']
         indexes = [
-            models.Index(fields=['date_captured']),
+            models.Index(fields=['date_captured']), # Database indexes on frequently queried fields
             models.Index(fields=['date_added']),
             models.Index(fields=['is_public']),
             models.Index(fields=['file_path']),
         ]
 
-
+# Tracks automated scanning operations
 class PhotoScanLog(models.Model):
     """Model to track when the NAS was last scanned for new photos."""
     scan_date = models.DateTimeField(auto_now_add=True)

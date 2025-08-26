@@ -1,3 +1,9 @@
+"""
+creates the REST API endpoints that your frontend can call to interact with your photo portfolio. 
+It's the "controller" layer that connects your models (database) and serializers (JSON conversion) to create a functional web API
+"""
+
+
 from rest_framework import generics, status, filters
 from rest_framework.decorators import api_view
 from rest_framework.response import Response

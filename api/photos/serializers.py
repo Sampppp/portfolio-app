@@ -1,7 +1,12 @@
+"""
+creates the translation layer between your Django models and JSON data for your REST API. 
+It defines how your photo data gets converted when sending/receiving API requests.
+"""
+
 from rest_framework import serializers
 from .models import Photo, Tag, PhotoScanLog
 
-
+# Simple JSON representation of tags
 class TagSerializer(serializers.ModelSerializer):
     """Serializer for Tag model."""
     
@@ -10,7 +15,7 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'created_at']
         read_only_fields = ['id', 'created_at']
 
-
+# Lightweight version for photo gallery/list views, Basic info needed for photo thumbnails and lists
 class PhotoListSerializer(serializers.ModelSerializer):
     """Serializer for Photo model in list views (minimal data)."""
     tags = TagSerializer(many=True, read_only=True)
@@ -31,7 +36,7 @@ class PhotoListSerializer(serializers.ModelSerializer):
             'date_added', 'file_extension'
         ]
 
-
+# Full photo data for individual photo views
 class PhotoDetailSerializer(serializers.ModelSerializer):
     """Serializer for Photo model in detail views (full data)."""
     tags = TagSerializer(many=True, read_only=True)

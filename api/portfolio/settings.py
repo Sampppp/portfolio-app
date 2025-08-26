@@ -5,7 +5,7 @@ Django settings for portfolio project.
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths inside the project like this: BASE_DIR / 'subdir'. Establish root dir
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -18,26 +18,27 @@ SECRET_KEY = 'django-insecure-your-secret-key-here-change-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+# allows requests from any domain (overly permissive for production)
+ALLOWED_HOSTS = ['*'] 
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'django.contrib.admin', # standard django apps
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
-    'corsheaders',
-    'photos',
+    'rest_framework', # REST Framework for building APIs
+    'corsheaders', # Cross-Origin Resource Sharing for frontend communication
+    'photos', # custom app for managing photos
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # CORS requests
+    'django.middleware.security.SecurityMiddleware', # Standard Django middleware for security, sessions, CSRF protection, etc.
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -46,7 +47,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'portfolio.urls'
+ROOT_URLCONF = 'portfolio.urls' # main URL configuration, urls.py acts as the "routing table" for the project
+
 
 TEMPLATES = [
     {
@@ -64,7 +66,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'portfolio.wsgi.application'
+WSGI_APPLICATION = 'portfolio.wsgi.application' # creates the bridge between the web server and Django application
 
 
 # Database
@@ -72,8 +74,8 @@ WSGI_APPLICATION = 'portfolio.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'photos'),
+        'ENGINE': 'django.db.backends.postgresql', # Uses PostgreSQL instead default SQLite
+        'NAME': os.environ.get('POSTGRES_DB', 'photos'), # Reads connection details from environment variables with fallback defaults
         'USER': os.environ.get('POSTGRES_USER', 'portfolio'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'strongpassword'),
         'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
@@ -104,13 +106,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
+LANGUAGE_CODE = 'en-us'     # Default language for your app
+TIME_ZONE = 'UTC'           # Default timezone for storing dates/times
+USE_I18N = True            # Enable internationalization (translation support)
+USE_TZ = True              # Enable timezone-aware datetime handling
 
 
 # Static files (CSS, JavaScript, Images)
@@ -126,10 +125,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField' # sets the default primary key type for the database model
 
 # REST Framework settings
-REST_FRAMEWORK = {
+REST_FRAMEWORK = { # REST Framework with JSON rendering and pagination (20 items per page)
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_RENDERER_CLASSES': [
@@ -138,12 +137,12 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings for frontend
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = [ # allow requests from frontend
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
+CORS_ALLOW_ALL_ORIGINS = True  # allows any origin (development only)
 
 # NAS mount path - adjust this to your actual NAS mount point
 NAS_PHOTOS_PATH = os.environ.get('NAS_PHOTOS_PATH', '/nas/photos')
