@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: grief26great83story76match88glare
+      POSTGRES_DB: photos
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - portfolio
+
+  api:
+    build: ./api
+    ports:
+      - "8100:8000"
+    environment:
+      DATABASE_URL: postgres://portfolio:grief26great83story76match88glare@postgres:5432/photos
+    depends_on:
+      - postgres
+    networks:
+      - portfolio
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8060:80"
+    depends_on:
+      - api
+    networks:
+      - portfolio
+
+networks:
+  portfolio:
+    driver: bridge
+
+volumes:
+  postgres_data:
