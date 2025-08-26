@@ -3,7 +3,7 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: portfolio
-      POSTGRES_PASSWORD: grief26great83story76match88glare
+      POSTGRES_PASSWORD: strongpassword
       POSTGRES_DB: photos
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -15,18 +15,16 @@ services:
     ports:
       - "8100:8000"
     environment:
-      DATABASE_URL: postgres://portfolio:grief26great83story76match88glare@postgres:5432/photos
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: strongpassword
+      POSTGRES_DB: photos
+      POSTGRES_HOST: postgres
+      NAS_PHOTOS_PATH: /nas/photos
+    volumes:
+      - ./api:/app
+      - /mnt/nas/portfolio:/nas/photos:ro  # Update this path to your actual NAS mount
     depends_on:
       - postgres
-    networks:
-      - portfolio
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "8060:80"
-    depends_on:
-      - api
     networks:
       - portfolio
 

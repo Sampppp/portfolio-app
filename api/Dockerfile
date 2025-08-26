@@ -7,4 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Collect static files (optional for admin later)
+RUN python manage.py collectstatic --noinput || true
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

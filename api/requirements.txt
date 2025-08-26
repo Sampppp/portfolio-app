@@ -1,4 +1,8 @@
-fastapi
-uvicorn[standard]
+Django>=5.0
 psycopg2-binary
-sqlalchemy
+djangorestframework>=3.14
+django-cors-headers>=4.0
+django-filter>=23.0
+Pillow>=10.0
+python-magic>=0.4
+exifread>=3.0
