@@ -53,6 +53,7 @@ docker compose up -d
 
 ### 3. Run Database Migrations
 ```bash
+docker compose exec api python manage.py makemigrations photos
 docker compose exec api python manage.py migrate
 ```
 
