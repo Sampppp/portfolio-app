@@ -21,6 +21,7 @@ class PhotoListSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     resolution_string = serializers.ReadOnlyField()
     file_extension = serializers.ReadOnlyField()
+    image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Photo
@@ -28,13 +29,22 @@ class PhotoListSerializer(serializers.ModelSerializer):
             'id', 'file_name', 'file_path', 'file_size',
             'resolution_width', 'resolution_height', 'resolution_string',
             'date_captured', 'date_added', 'caption', 'tags',
-            'file_extension', 'is_public'
+            'file_extension', 'is_public', 'image_url'
         ]
         read_only_fields = [
             'id', 'file_name', 'file_path', 'file_size',
             'resolution_width', 'resolution_height', 'date_captured',
             'date_added', 'file_extension'
         ]
+    
+    def get_image_url(self, obj):
+        """Generate the image URL for serving the photo."""
+        if obj.file_path:
+            # Convert NAS path to media URL
+            # Remove the NAS mount prefix and create media URL
+            relative_path = obj.file_path.replace('/nas/photos/', '')
+            return f'/media/photos/{relative_path}'
+        return None
 
 # Full photo data for individual photo views
 class PhotoDetailSerializer(serializers.ModelSerializer):
@@ -49,6 +59,7 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
     resolution_string = serializers.ReadOnlyField()
     file_extension = serializers.ReadOnlyField()
     is_image = serializers.ReadOnlyField()
+    image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Photo
@@ -58,7 +69,7 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
             'resolution_string', 'focal_length', 'shutter_speed', 'aperture', 'iso',
             'date_captured', 'date_added', 'date_modified',
             'caption', 'tags', 'tag_names', 'is_public',
-            'file_extension', 'is_image'
+            'file_extension', 'is_image', 'image_url'
         ]
         read_only_fields = [
             'id', 'file_name', 'file_path', 'file_size',
@@ -67,6 +78,15 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
             'date_captured', 'date_added', 'date_modified',
             'file_extension', 'is_image'
         ]
+    
+    def get_image_url(self, obj):
+        """Generate the image URL for serving the photo."""
+        if obj.file_path:
+            # Convert NAS path to media URL
+            # Remove the NAS mount prefix and create media URL
+            relative_path = obj.file_path.replace('/nas/photos/', '')
+            return f'/media/photos/{relative_path}'
+        return None
     
     def update(self, instance, validated_data):
         """Handle updating tags when tag_names is provided."""

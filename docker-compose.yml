@@ -22,9 +22,18 @@ services:
       NAS_PHOTOS_PATH: /nas/photos
     volumes:
       - ./api:/app
-      - /mnt/nas/portfolio:/nas/photos:ro  # Update this path to your actual NAS mount
+      - /home/spak22/portfolio-app/images:/nas/photos:ro  # Update this path to your actual NAS mount /mnt/nas/portfolio
     depends_on:
       - postgres
+    networks:
+      - portfolio
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
     networks:
       - portfolio
 
