@@ -223,7 +223,7 @@ def search_photos(request):
 
 class PhotoScanLogListView(generics.ListAPIView):
     """
-    List photo scan logs to track NAS scanning history.
+    List photo scan logs to track image folder scanning history.
     """
     queryset = PhotoScanLog.objects.all()
     serializer_class = PhotoScanLogSerializer

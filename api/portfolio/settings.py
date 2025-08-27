@@ -120,7 +120,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.environ.get('PHOTOS_PATH', os.path.join(BASE_DIR, 'media'))
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -143,6 +143,3 @@ CORS_ALLOWED_ORIGINS = [ # allow requests from frontend
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True  # allows any origin (development only)
-
-# NAS mount path - adjust this to your actual NAS mount point
-NAS_PHOTOS_PATH = os.environ.get('NAS_PHOTOS_PATH', '/nas/photos')

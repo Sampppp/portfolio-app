@@ -7,7 +7,7 @@ A web portfolio application to display photos with metadata, built with Django R
 - **Backend**: Django REST API with PostgreSQL database
 - **Frontend**: React with Tailwind CSS (served by nginx)
 - **Database**: PostgreSQL for photo metadata storage
-- **Storage**: NAS integration for photo files
+- **Storage**: Customizable image folder to store photo files
 
 ## Features
 
@@ -16,7 +16,7 @@ A web portfolio application to display photos with metadata, built with Django R
 - Public portfolio display
 - Caption/description management
 - Advanced search and filtering
-- NAS integration for automatic photo discovery
+- Automatic photo discovery
 
 ## API Endpoints
 
@@ -35,15 +35,15 @@ A web portfolio application to display photos with metadata, built with Django R
 - `GET /api/tags/{id}/photos/` - Get photos with specific tag
 
 ### Scan Logs
-- `GET /api/scan-logs/` - View NAS scan history
+- `GET /api/scan-logs/` - View image folder scan history
 
 ## Setup Instructions
 
-### 1. Configure NAS Mount
-Update the volume mount in `docker-compose.yml`:
+### 1. Configure image folder
+Update the volume in `docker-compose.yml`:
 ```yaml
 volumes:
-  - /path/to/your/nas/photos:/nas/photos:ro
+  - /path/to/your/images/:/app/images:ro
 ```
 
 ### 2. Start Services
@@ -62,7 +62,7 @@ docker compose exec api python manage.py migrate
 docker compose exec api python manage.py createsuperuser
 ```
 
-### 5. Scan Photos from NAS
+### 5. Scan Photos from image folder
 ```bash
 docker compose exec api python manage.py scan_photos
 ```
@@ -73,7 +73,7 @@ docker compose exec api python manage.py scan_photos
 - `POSTGRES_PASSWORD` - Database password
 - `POSTGRES_DB` - Database name
 - `POSTGRES_HOST` - Database host
-- `NAS_PHOTOS_PATH` - Path to NAS photos inside container
+- `PHOTOS_PATH` - Path to image folder inside container
 
 ## Photo Metadata
 
@@ -91,7 +91,7 @@ The system extracts and stores the following metadata:
 
 ## Usage
 
-1. Mount your NAS photos directory to `/nas/photos` in the container
+1. Set your image folder directory to `/app/photos` in the container
 2. Run the `scan_photos` management command to discover and index photos
 3. Use the API endpoints to retrieve photos and metadata
 4. Access the admin interface at `http://localhost:8100/admin/` to manage photos and tags

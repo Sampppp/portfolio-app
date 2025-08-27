@@ -19,10 +19,10 @@ services:
       POSTGRES_PASSWORD: strongpassword
       POSTGRES_DB: photos
       POSTGRES_HOST: postgres
-      NAS_PHOTOS_PATH: /nas/photos
+      PHOTOS_PATH: /app/images
     volumes:
       - ./api:/app
-      - /home/spak22/portfolio-app/images:/nas/photos:ro  # Update this path to your actual NAS mount /mnt/nas/portfolio
+      - /home/spak22/portfolio-app/images:/app/images:ro  # Update this path image folder
     depends_on:
       - postgres
     networks:

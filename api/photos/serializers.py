@@ -38,13 +38,13 @@ class PhotoListSerializer(serializers.ModelSerializer):
         ]
     
     def get_image_url(self, obj):
-        """Generate the image URL for serving the photo."""
-        if obj.file_path:
-            # Convert NAS path to media URL
-            # Remove the NAS mount prefix and create media URL
-            relative_path = obj.file_path.replace('/nas/photos/', '')
-            return f'/media/photos/{relative_path}'
+        """Generate URL for the image file."""
+        if obj.file_path and obj.is_image:
+            # Remove leading slash if present to avoid double slashes
+            file_path = obj.file_path.lstrip('/')
+            return f"/media/{file_path}"
         return None
+    
 
 # Full photo data for individual photo views
 class PhotoDetailSerializer(serializers.ModelSerializer):
@@ -80,12 +80,11 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
         ]
     
     def get_image_url(self, obj):
-        """Generate the image URL for serving the photo."""
-        if obj.file_path:
-            # Convert NAS path to media URL
-            # Remove the NAS mount prefix and create media URL
-            relative_path = obj.file_path.replace('/nas/photos/', '')
-            return f'/media/photos/{relative_path}'
+        """Generate URL for the image file."""
+        if obj.file_path and obj.is_image:
+            # Remove leading slash if present to avoid double slashes
+            file_path = obj.file_path.lstrip('/')
+            return f"/media/{file_path}"
         return None
     
     def update(self, instance, validated_data):

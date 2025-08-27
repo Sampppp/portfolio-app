@@ -24,7 +24,7 @@ class Photo(models.Model):
     
     # File information
     file_name = models.CharField(max_length=255)
-    file_path = models.CharField(max_length=500, unique=True)  # Path relative to NAS mount
+    file_path = models.CharField(max_length=500, unique=True)  # Relative path
     file_size = models.BigIntegerField(help_text="File size in bytes")
     
     # Photo metadata
@@ -83,7 +83,7 @@ class Photo(models.Model):
 
 # Tracks automated scanning operations
 class PhotoScanLog(models.Model):
-    """Model to track when the NAS was last scanned for new photos."""
+    """Model to track when the image folder was last scanned for new photos."""
     scan_date = models.DateTimeField(auto_now_add=True)
     photos_found = models.IntegerField(default=0)
     photos_added = models.IntegerField(default=0)

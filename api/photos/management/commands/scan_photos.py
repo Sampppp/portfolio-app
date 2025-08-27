@@ -10,14 +10,14 @@ import exifread
 
 
 class Command(BaseCommand):
-    help = 'Scan NAS directory for photos and update database with metadata'
+    help = 'Scan image folder directory for photos and update database with metadata'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--path',
             type=str,
-            default=settings.NAS_PHOTOS_PATH,
-            help='Path to scan for photos (default: NAS_PHOTOS_PATH setting)'
+            default=settings.PHOTOS_PATH,
+            help='Path to scan for photos (default: PHOTOS_PATH setting)'
         )
         parser.add_argument(
             '--dry-run',
@@ -60,7 +60,7 @@ class Command(BaseCommand):
                 photos_found += 1
                 
                 try:
-                    # Get relative path from NAS mount point
+                    # Get relative path from image folder
                     relative_path = os.path.relpath(file_path, scan_path)
                     
                     # Check if photo already exists
