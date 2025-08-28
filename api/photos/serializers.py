@@ -29,7 +29,7 @@ class PhotoListSerializer(serializers.ModelSerializer):
             'id', 'file_name', 'file_path', 'file_size',
             'resolution_width', 'resolution_height', 'resolution_string',
             'date_captured', 'date_added', 'caption', 'tags',
-            'file_extension', 'is_public', 'image_url'
+            'file_extension', 'image_url'
         ]
         read_only_fields = [
             'id', 'file_name', 'file_path', 'file_size',
@@ -68,7 +68,7 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
             'camera_name', 'lens_name', 'resolution_width', 'resolution_height',
             'resolution_string', 'focal_length', 'shutter_speed', 'aperture', 'iso',
             'date_captured', 'date_added', 'date_modified',
-            'caption', 'tags', 'tag_names', 'is_public',
+            'caption', 'tags', 'tag_names',
             'file_extension', 'is_image', 'image_url'
         ]
         read_only_fields = [

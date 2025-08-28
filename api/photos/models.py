@@ -47,10 +47,7 @@ class Photo(models.Model):
     
     # Tags relationship
     tags = models.ManyToManyField(Tag, blank=True, related_name='photos')
-    
-    # Additional metadata
-    is_public = models.BooleanField(default=True, help_text="Whether this photo is visible in public portfolio")
-    
+        
     def __str__(self):
         return self.file_name
     
@@ -69,7 +66,7 @@ class Photo(models.Model):
     @property
     def is_image(self):
         """Check if the file is an image based on extension"""
-        image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.raw', '.cr2', '.nef']
+        image_extensions = ['.jpg', '.jpeg', '.png']
         return self.file_extension in image_extensions
     
     class Meta: # Default sort by capture date then by date added
@@ -77,7 +74,6 @@ class Photo(models.Model):
         indexes = [
             models.Index(fields=['date_captured']), # Database indexes on frequently queried fields
             models.Index(fields=['date_added']),
-            models.Index(fields=['is_public']),
             models.Index(fields=['file_path']),
         ]
 

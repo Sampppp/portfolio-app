@@ -247,14 +247,6 @@ function displayPhotoDetail(photo) {
                            value="${photo.tags.map(tag => tag.name).join(', ')}"
                            placeholder="tag1, tag2, tag3">
                 </div>
-                
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="photo-public" 
-                           ${photo.is_public ? 'checked' : ''}>
-                    <label class="form-check-label" for="photo-public">
-                        Public Photo
-                    </label>
-                </div>
             </div>
         </div>
         
@@ -298,7 +290,6 @@ async function savePhotoChanges() {
     
     const caption = document.getElementById('photo-caption').value;
     const tagsInput = document.getElementById('photo-tags').value;
-    const isPublic = document.getElementById('photo-public').checked;
     
     // Parse tags
     const tagNames = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
@@ -307,7 +298,6 @@ async function savePhotoChanges() {
         // Update photo
         const updateData = {
             caption: caption,
-            is_public: isPublic,
             tags: tagNames
         };
         

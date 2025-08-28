@@ -21,7 +21,7 @@ A web portfolio application to display photos with metadata, built with Django R
 ## API Endpoints
 
 ### Photos
-- `GET /api/photos/` - List all public photos (with filtering)
+- `GET /api/photos/` - List all photos (with filtering)
 - `GET /api/photos/{id}/` - Get photo details
 - `PATCH /api/photos/{id}/` - Update photo (caption, tags, visibility)
 - `PATCH /api/photos/{id}/caption/` - Update only caption

@@ -34,7 +34,7 @@ class PhotoListView(generics.ListAPIView):
     ordering = ['-date_captured', '-date_added']
     
     def get_queryset(self):
-        queryset = Photo.objects.filter(is_public=True).prefetch_related('tags')
+        queryset = Photo.objects.filter().prefetch_related('tags')
         
         # Filter by tags
         tags = self.request.query_params.get('tags', None)
@@ -60,9 +60,9 @@ class PhotoDetailView(generics.RetrieveUpdateAPIView):
     Retrieve or update a specific photo.
     
     GET: Returns full photo details including all metadata
-    PATCH/PUT: Update caption, tags, and is_public status
+    PATCH/PUT: Update caption and tags
     """
-    queryset = Photo.objects.filter(is_public=True)
+    queryset = Photo.objects.filter()
     serializer_class = PhotoDetailSerializer
 
 
@@ -70,7 +70,7 @@ class PhotoCaptionView(generics.UpdateAPIView):
     """
     Update only the caption of a specific photo.
     """
-    queryset = Photo.objects.filter(is_public=True)
+    queryset = Photo.objects.filter()
     serializer_class = PhotoCaptionSerializer
 
 
@@ -103,8 +103,7 @@ class PhotosByTagView(generics.ListAPIView):
     def get_queryset(self):
         tag_id = self.kwargs['tag_id']
         return Photo.objects.filter(
-            tags__id=tag_id, 
-            is_public=True
+            tags__id=tag_id
         ).prefetch_related('tags')
 
 
@@ -113,18 +112,16 @@ def photo_stats(request):
     """
     Get statistics about the photo collection.
     """
-    total_photos = Photo.objects.filter(is_public=True).count()
+    total_photos = Photo.objects.filter().count()
     total_tags = Tag.objects.count()
     
     # Get camera statistics
     camera_stats = Photo.objects.filter(
-        is_public=True, 
         camera_name__isnull=False
     ).values('camera_name').distinct().count()
     
     # Get lens statistics
     lens_stats = Photo.objects.filter(
-        is_public=True, 
         lens_name__isnull=False
     ).values('lens_name').distinct().count()
     
@@ -133,7 +130,6 @@ def photo_stats(request):
     from datetime import timedelta
     thirty_days_ago = timezone.now() - timedelta(days=30)
     recent_photos = Photo.objects.filter(
-        is_public=True,
         date_added__gte=thirty_days_ago
     ).count()
     
@@ -159,7 +155,7 @@ def search_photos(request):
     - date_from: Filter photos from this date (YYYY-MM-DD)
     - date_to: Filter photos to this date (YYYY-MM-DD)
     """
-    queryset = Photo.objects.filter(is_public=True).prefetch_related('tags')
+    queryset = Photo.objects.filter().prefetch_related('tags')
     
     # Text search
     query = request.query_params.get('q', None)

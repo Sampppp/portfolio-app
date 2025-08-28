@@ -5,6 +5,8 @@ services:
       POSTGRES_USER: portfolio
       POSTGRES_PASSWORD: strongpassword
       POSTGRES_DB: photos
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -22,7 +24,7 @@ services:
       PHOTOS_PATH: /app/images
     volumes:
       - ./api:/app
-      - /home/spak22/portfolio-app/images:/app/images:ro  # Update this path image folder
+      - /home/spak/portfolio-app/images:/app/images:ro  # Update this path image folder
     depends_on:
       - postgres
     networks:

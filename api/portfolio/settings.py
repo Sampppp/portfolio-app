@@ -143,3 +143,5 @@ CORS_ALLOWED_ORIGINS = [ # allow requests from frontend
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True  # allows any origin (development only)
+
+PHOTOS_PATH = os.environ.get('PHOTOS_PATH', '/app/images')

@@ -21,10 +21,10 @@ class TagAdmin(admin.ModelAdmin):
 class PhotoAdmin(admin.ModelAdmin):
     list_display = [ # Shows key photo info in a table
         'file_name', 'camera_name', 'lens_name', 'date_captured', 
-        'is_public', 'tag_list', 'date_added'
+        'tag_list', 'date_added'
     ]
     list_filter = [ # Adds sidebar filters for quick photo filtering
-        'is_public', 'camera_name', 'lens_name', 'date_captured', 
+        'camera_name', 'lens_name', 'date_captured', 
         'date_added', 'tags'
     ]
     search_fields = [
@@ -52,7 +52,7 @@ class PhotoAdmin(admin.ModelAdmin):
             'fields': ('date_captured', 'date_added', 'date_modified')
         }),
         ('Content', {
-            'fields': ('caption', 'tags', 'is_public')
+            'fields': ('caption', 'tags')
         }),
     )
     

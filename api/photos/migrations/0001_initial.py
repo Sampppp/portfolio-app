@@ -56,12 +56,11 @@ class Migration(migrations.Migration):
                 ('date_added', models.DateTimeField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
                 ('caption', models.TextField(blank=True, help_text='User-provided caption/description', null=True)),
-                ('is_public', models.BooleanField(default=True, help_text='Whether this photo is visible in public portfolio')),
                 ('tags', models.ManyToManyField(blank=True, related_name='photos', to='photos.tag')),
             ],
             options={
                 'ordering': ['-date_captured', '-date_added'],
-                'indexes': [models.Index(fields=['date_captured'], name='photos_phot_date_ca_502f4f_idx'), models.Index(fields=['date_added'], name='photos_phot_date_ad_c215bb_idx'), models.Index(fields=['is_public'], name='photos_phot_is_publ_2d152c_idx'), models.Index(fields=['file_path'], name='photos_phot_file_pa_65a143_idx')],
+                'indexes': [models.Index(fields=['date_captured'], name='photos_phot_date_ca_502f4f_idx'), models.Index(fields=['date_added'], name='photos_phot_date_ad_c215bb_idx'), models.Index(fields=['file_path'], name='photos_phot_file_pa_65a143_idx')],
             },
         ),
     ]
