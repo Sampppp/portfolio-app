@@ -9,11 +9,19 @@ from .models import Photo, Tag, PhotoScanLog
 # Simple JSON representation of tags
 class TagSerializer(serializers.ModelSerializer):
     """Serializer for Tag model."""
+    photo_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Tag
-        fields = ['id', 'name', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = ['id', 'name', 'photo_count']
+        read_only_fields = ['id']
+    
+    def get_photo_count(self, obj):
+        """Return the number of photos associated with this tag."""
+        # Use prefetched data if available, otherwise query
+        if hasattr(obj, '_prefetched_objects_cache') and 'photos' in obj._prefetched_objects_cache:
+            return len(obj._prefetched_objects_cache['photos'])
+        return obj.photos.count()
 
 # Lightweight version for photo gallery/list views, Basic info needed for photo thumbnails and lists
 class PhotoListSerializer(serializers.ModelSerializer):
@@ -26,15 +34,11 @@ class PhotoListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
         fields = [
-            'id', 'file_name', 'file_path', 'file_size',
-            'resolution_width', 'resolution_height', 'resolution_string',
-            'date_captured', 'date_added', 'caption', 'tags',
-            'file_extension', 'image_url'
+            'id', 'file_name', 'file_path', 'file_size', 'resolution_width', 'resolution_height', 'date_captured', 'date_added', 'file_extension', 
+            'caption', 'tags', 'resolution_string', 'image_url'
         ]
         read_only_fields = [
-            'id', 'file_name', 'file_path', 'file_size',
-            'resolution_width', 'resolution_height', 'date_captured',
-            'date_added', 'file_extension'
+            'id', 'file_name', 'file_path', 'file_size', 'resolution_width', 'resolution_height', 'date_captured', 'date_added', 'file_extension'
         ]
     
     def get_image_url(self, obj):
@@ -64,19 +68,11 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
         fields = [
-            'id', 'file_name', 'file_path', 'file_size',
-            'camera_name', 'lens_name', 'resolution_width', 'resolution_height',
-            'resolution_string', 'focal_length', 'shutter_speed', 'aperture', 'iso',
-            'date_captured', 'date_added', 'date_modified',
-            'caption', 'tags', 'tag_names',
-            'file_extension', 'is_image', 'image_url'
+            'id', 'file_name', 'file_path', 'file_size', 'camera_name', 'lens_name', 'resolution_width', 'resolution_height', 'focal_length', 'shutter_speed', 'aperture', 'iso', 'date_captured', 'date_added', 'date_modified', 'file_extension', 'is_image',
+            'resolution_string', 'caption', 'tags', 'tag_names', 'image_url'
         ]
         read_only_fields = [
-            'id', 'file_name', 'file_path', 'file_size',
-            'camera_name', 'lens_name', 'resolution_width', 'resolution_height',
-            'focal_length', 'shutter_speed', 'aperture', 'iso',
-            'date_captured', 'date_added', 'date_modified',
-            'file_extension', 'is_image'
+            'id', 'file_name', 'file_path', 'file_size', 'camera_name', 'lens_name', 'resolution_width', 'resolution_height', 'focal_length', 'shutter_speed', 'aperture', 'iso', 'date_captured', 'date_added', 'date_modified', 'file_extension', 'is_image'
         ]
     
     def get_image_url(self, obj):
@@ -122,7 +118,7 @@ class PhotoScanLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = PhotoScanLog
         fields = [
-            'id', 'scan_date', 'photos_found', 'photos_added',
-            'photos_updated', 'scan_duration', 'errors'
+            'id', 'scan_date', 
+            'photos_found', 'photos_added','photos_updated', 'scan_duration', 'errors'
         ]
         read_only_fields = ['id', 'scan_date']

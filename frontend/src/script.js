@@ -39,7 +39,7 @@ function formatFileSize(bytes) {
 }
 
 // Section Navigation
-function showSection(sectionName) {
+function showSection(sectionName, event) {
     // Hide all sections
     document.querySelectorAll('.section').forEach(section => {
         section.classList.add('d-none');
@@ -48,11 +48,13 @@ function showSection(sectionName) {
     // Show selected section
     document.getElementById(`${sectionName}-section`).classList.remove('d-none');
     
-    // Update navbar
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    event.target.classList.add('active');
+    // Update navbar only if event is provided (clicked from nav)
+    if (event && event.target) {
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
     
     // Load data for specific sections
     switch(sectionName) {
@@ -295,10 +297,10 @@ async function savePhotoChanges() {
     const tagNames = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
     
     try {
-        // Update photo
+        // Update photo - backend expects 'tag_names' not 'tags'
         const updateData = {
             caption: caption,
-            tags: tagNames
+            tag_names: tagNames
         };
         
         const response = await fetch(`${API_BASE}/photos/${currentPhotoId}/`, {
@@ -441,7 +443,9 @@ async function loadTags() {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const tags = await response.json();
+        const data = await response.json();
+        // Handle both paginated and direct array responses
+        const tags = data.results || data;
         allTags = tags;
         displayTags(tags);
         showToast(`Loaded ${tags.length} tags`, 'success');
@@ -475,11 +479,11 @@ function displayTags(tags) {
         <div class="tag-item">
             <div class="flex-grow-1">
                 <strong>${tag.name}</strong>
-                <small class="text-muted ms-2">Created: ${formatDate(tag.created_at)}</small>
+                <small class="text-muted ms-2">${tag.photo_count} photo${tag.photo_count !== 1 ? 's' : ''}</small>
             </div>
             <div class="tag-actions">
                 <button class="btn btn-sm btn-outline-primary" onclick="viewTagPhotos(${tag.id})">
-                    <i class="bi bi-images"></i> Photos
+                    <i class="bi bi-images"></i> View Photos (${tag.photo_count})
                 </button>
                 <button class="btn btn-sm btn-outline-danger" onclick="deleteTag(${tag.id})">
                     <i class="bi bi-trash"></i>
@@ -556,7 +560,15 @@ async function viewTagPhotos(tagId) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const photos = await response.json();
+        const data = await response.json();
+        
+        // Handle both paginated and direct array responses
+        const photos = data.results || data;
+        
+        // Ensure photos is an array
+        if (!Array.isArray(photos)) {
+            throw new Error('Invalid response format: expected array of photos');
+        }
         
         // Switch to photos section and display results
         showSection('photos');

@@ -10,7 +10,6 @@ import os
 class Tag(models.Model):
     """Model for photo tags like 'portrait', 'landscape', etc."""
     name = models.CharField(max_length=50, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self): # tags display as their name in admin interface
         return self.name

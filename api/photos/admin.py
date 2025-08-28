@@ -8,7 +8,7 @@ from .models import Photo, Tag, PhotoScanLog
 # Manages photo tags/categories
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ['name', 'created_at', 'photo_count']
+    list_display = ['name', 'photo_count']
     search_fields = ['name']
     ordering = ['name']
     

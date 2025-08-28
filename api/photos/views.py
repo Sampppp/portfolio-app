@@ -18,7 +18,7 @@ from .serializers import (
 
 class PhotoListView(generics.ListAPIView):
     """
-    List all public photos with filtering and search capabilities.
+    List all photos with filtering and search capabilities.
     
     Query parameters:
     - search: Search in file names and captions
@@ -81,7 +81,7 @@ class TagListView(generics.ListCreateAPIView):
     GET: Returns all tags with photo counts
     POST: Create a new tag
     """
-    queryset = Tag.objects.all()
+    queryset = Tag.objects.all().prefetch_related('photos')
     serializer_class = TagSerializer
     ordering = ['name']
 
