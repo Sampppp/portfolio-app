@@ -1,22 +1,21 @@
-# Portfolio App
+# StackFolio
 
-A web portfolio application to display photos with metadata, built with Django REST API backend and React frontend.
+A web portfolio application to display photos with metadata
 
 ## Architecture
 
 - **Backend**: Django REST API with PostgreSQL database
-- **Frontend**: React with Tailwind CSS (served by nginx)
+- **Frontend**: HTML/CSS/JS (served by nginx)
 - **Database**: PostgreSQL for photo metadata storage
-- **Storage**: Customizable image folder to store photo files
+- **Storage**: Customizable image folder to store image files
 
 ## Features
 
 - Photo metadata extraction (camera, lens, EXIF data)
 - Tagging system for organizing photos
-- Public portfolio display
+- Minimalistic portfolio display
 - Caption/description management
 - Advanced search and filtering
-- Automatic photo discovery
 
 ## API Endpoints
 
@@ -43,7 +42,7 @@ A web portfolio application to display photos with metadata, built with Django R
 Update the volume in `docker-compose.yml`:
 ```yaml
 volumes:
-  - /path/to/your/images/:/app/images:ro
+  - /path/to/your/images:/app/images:ro
 ```
 
 ### 2. Start Services
@@ -53,7 +52,6 @@ docker compose up -d
 
 ### 3. Run Database Migrations
 ```bash
-docker compose exec api python manage.py makemigrations photos
 docker compose exec api python manage.py migrate
 ```
 
@@ -65,6 +63,13 @@ docker compose exec api python manage.py createsuperuser
 ### 5. Scan Photos from image folder
 ```bash
 docker compose exec api python manage.py scan_photos
+```
+
+### Additional commans
+```bash
+docker compose exec api python manage.py makemigrations photos
+docker compose down
+docker compose build
 ```
 
 ## Environment Variables
@@ -107,10 +112,17 @@ The system extracts and stores the following metadata:
 ## Photo Organization
 
 Photos can be organized using tags. Common tag examples:
+
 - `portrait` - Portrait photography
 - `landscape` - Landscape photography  
 - `street` - Street photography
 - `macro` - Macro photography
 - `event` - Event photography
 
-Tags are automatically created when assigned to photos and can be managed through the admin interface or API.
+## Future Development
+
+- establish a secure https connection
+- option to let ai generate an image caption using scenxplain
+- option to let ai generate an image's tags
+- basic auto tagging, automatically determining if image is portrait/landscape/sqare
+- build an mcp server to have a more standardized process when passing image data to a LLM for captioning

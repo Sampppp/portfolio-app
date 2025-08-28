@@ -1,8 +1,12 @@
-// Photo Portfolio API Tester JavaScript
+// StackFolio JavaScript
 
 // Global variables
 let currentPhotoId = null;
 let allTags = [];
+let currentPage = 1;
+let isLoading = false;
+let hasMorePhotos = true;
+let currentFilters = {};
 
 // API Base URL (will be proxied through nginx)
 const API_BASE = '/api';
@@ -12,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     checkApiStatus();
     loadPhotos();
     loadTags();
+    setupInfiniteScroll();
 });
 
 // Utility Functions
@@ -93,15 +98,29 @@ async function checkApiStatus() {
 }
 
 // Photos Functions
-async function loadPhotos(params = {}) {
+async function loadPhotos(params = {}, reset = true) {
+    if (isLoading) return;
+    
     const loadingElement = document.getElementById('photos-loading');
     const gridElement = document.getElementById('photos-grid');
     
+    if (reset) {
+        currentPage = 1;
+        hasMorePhotos = true;
+        currentFilters = params;
+        gridElement.innerHTML = '';
+    }
+    
+    isLoading = true;
     loadingElement.classList.remove('d-none');
-    gridElement.innerHTML = '';
     
     try {
-        const queryParams = new URLSearchParams(params);
+        const queryParams = new URLSearchParams({
+            ...params,
+            page: currentPage,
+            page_size: 20
+        });
+        
         const response = await fetch(`${API_BASE}/photos/?${queryParams}`);
         
         if (!response.ok) {
@@ -109,19 +128,37 @@ async function loadPhotos(params = {}) {
         }
         
         const data = await response.json();
-        displayPhotos(data.results || data);
-        showToast(`Loaded ${(data.results || data).length} photos`, 'success');
+        const photos = data.results || data;
+        
+        if (reset) {
+            displayPhotos(photos);
+            showToast(`Loaded ${photos.length} photos`, 'success');
+        } else {
+            appendPhotos(photos);
+        }
+        
+        // Check if there are more photos to load
+        if (data.next) {
+            hasMorePhotos = true;
+            currentPage++;
+        } else {
+            hasMorePhotos = false;
+        }
+        
     } catch (error) {
         showToast(`Error loading photos: ${error.message}`, 'error');
-        gridElement.innerHTML = `
-            <div class="col-12">
-                <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    Error loading photos: ${error.message}
+        if (reset) {
+            gridElement.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Error loading photos: ${error.message}
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
     } finally {
+        isLoading = false;
         loadingElement.classList.add('d-none');
     }
 }
@@ -141,44 +178,33 @@ function displayPhotos(photos) {
         return;
     }
     
-    gridElement.innerHTML = photos.map(photo => `
+    gridElement.innerHTML = photos.map(photo => createPhotoCard(photo)).join('');
+}
+
+function appendPhotos(photos) {
+    const gridElement = document.getElementById('photos-grid');
+    const newPhotosHTML = photos.map(photo => createPhotoCard(photo)).join('');
+    gridElement.insertAdjacentHTML('beforeend', newPhotosHTML);
+}
+
+function createPhotoCard(photo) {
+    return `
         <div class="col-md-4 col-lg-3 mb-4">
-            <div class="card photo-card" onclick="showPhotoDetail(${photo.id})">
+            <div class="photo-card-clean" onclick="showPhotoDetail(${photo.id})">
                 ${photo.image_url ? `
-                    <img src="${photo.image_url}" alt="${photo.file_name}" class="photo-thumbnail" 
+                    <img src="${photo.image_url}" alt="${photo.file_name}" class="photo-thumbnail-clean" 
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="photo-placeholder" style="display: none;">
+                    <div class="photo-placeholder-clean" style="display: none;">
                         <i class="bi bi-image"></i>
                     </div>
                 ` : `
-                    <div class="photo-placeholder">
+                    <div class="photo-placeholder-clean">
                         <i class="bi bi-image"></i>
                     </div>
                 `}
-                <div class="card-body">
-                    <h6 class="card-title text-truncate">${photo.file_name}</h6>
-                    <div class="metadata-item">
-                        <strong>Size:</strong> ${formatFileSize(photo.file_size)}
-                    </div>
-                    ${photo.camera_name ? `
-                        <div class="metadata-item">
-                            <strong>Camera:</strong> ${photo.camera_name}
-                        </div>
-                    ` : ''}
-                    ${photo.date_captured ? `
-                        <div class="metadata-item">
-                            <strong>Captured:</strong> ${formatDate(photo.date_captured)}
-                        </div>
-                    ` : ''}
-                    <div class="mt-2">
-                        ${photo.tags.map(tag => `
-                            <span class="badge bg-secondary tag-badge">${tag.name}</span>
-                        `).join('')}
-                    </div>
-                </div>
             </div>
         </div>
-    `).join('');
+    `;
 }
 
 function applyPhotoFilters() {
@@ -194,7 +220,23 @@ function applyPhotoFilters() {
     if (tags) params.tags = tags;
     if (ordering) params.ordering = ordering;
     
-    loadPhotos(params);
+    loadPhotos(params, true);
+}
+
+// Infinite Scroll Setup
+function setupInfiniteScroll() {
+    window.addEventListener('scroll', () => {
+        // Only trigger on photos section
+        const photosSection = document.getElementById('photos-section');
+        if (photosSection.classList.contains('d-none')) return;
+        
+        // Check if we're near the bottom of the page
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
+            if (hasMorePhotos && !isLoading) {
+                loadPhotos(currentFilters, false);
+            }
+        }
+    });
 }
 
 // Photo Detail Functions
