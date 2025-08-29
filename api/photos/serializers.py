@@ -36,15 +36,20 @@ class PhotoListSerializer(serializers.ModelSerializer):
     resolution_string = serializers.ReadOnlyField()
     file_extension = serializers.ReadOnlyField()
     image_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
+    thumbnail_webp_url = serializers.SerializerMethodField()
+    thumbnail_jpeg_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Photo
         fields = [
             'id', 'file_name', 'file_path', 'file_size', 'resolution_width', 'resolution_height', 'date_captured', 'date_added', 'file_extension', 
-            'caption', 'tags', 'resolution_string', 'image_url'
+            'caption', 'tags', 'resolution_string', 'image_url', 'thumbnail_url', 'thumbnail_webp_url', 'thumbnail_jpeg_url', 
+            'has_thumbnail', 'thumbnail_width', 'thumbnail_height'
         ]
         read_only_fields = [
-            'id', 'file_name', 'file_path', 'file_size', 'resolution_width', 'resolution_height', 'date_captured', 'date_added', 'file_extension'
+            'id', 'file_name', 'file_path', 'file_size', 'resolution_width', 'resolution_height', 'date_captured', 'date_added', 'file_extension',
+            'has_thumbnail', 'thumbnail_width', 'thumbnail_height'
         ]
     
     def get_image_url(self, obj):
@@ -53,6 +58,28 @@ class PhotoListSerializer(serializers.ModelSerializer):
             # Remove leading slash if present to avoid double slashes
             file_path = obj.file_path.lstrip('/')
             return f"/media/{file_path}"
+        return None
+    
+    def get_thumbnail_url(self, obj):
+        """Return the primary thumbnail URL (WebP preferred, JPEG fallback)."""
+        if obj.has_thumbnail and obj.thumbnail_path:
+            return f"/media/{obj.thumbnail_path.lstrip('/')}"
+        return None
+    
+    def get_thumbnail_webp_url(self, obj):
+        """Return WebP thumbnail URL if available."""
+        if obj.has_thumbnail and obj.thumbnail_path:
+            base_name = obj.file_name.split('.')[0]
+            webp_path = f"thumbnails/{base_name}_thumb.webp"
+            return f"/media/{webp_path}"
+        return None
+    
+    def get_thumbnail_jpeg_url(self, obj):
+        """Return JPEG thumbnail URL as fallback."""
+        if obj.has_thumbnail and obj.thumbnail_path:
+            base_name = obj.file_name.split('.')[0]
+            jpeg_path = f"thumbnails/{base_name}_thumb.jpg"
+            return f"/media/{jpeg_path}"
         return None
     
 
@@ -74,15 +101,17 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
     file_extension = serializers.ReadOnlyField()
     is_image = serializers.ReadOnlyField()
     image_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.ReadOnlyField()
     
     class Meta:
         model = Photo
         fields = [
             'id', 'file_name', 'file_path', 'file_size', 'camera_name', 'lens_name', 'resolution_width', 'resolution_height', 'focal_length', 'shutter_speed', 'aperture', 'iso', 'date_captured', 'date_added', 'date_modified', 'file_extension', 'is_image',
-            'resolution_string', 'caption', 'tags', 'tag_names', 'image_url'
+            'resolution_string', 'caption', 'tags', 'tag_names', 'image_url', 'thumbnail_url', 'has_thumbnail', 'thumbnail_width', 'thumbnail_height'
         ]
         read_only_fields = [
-            'id', 'file_name', 'file_path', 'file_size', 'camera_name', 'lens_name', 'resolution_width', 'resolution_height', 'focal_length', 'shutter_speed', 'aperture', 'iso', 'date_captured', 'date_added', 'date_modified', 'file_extension', 'is_image'
+            'id', 'file_name', 'file_path', 'file_size', 'camera_name', 'lens_name', 'resolution_width', 'resolution_height', 'focal_length', 'shutter_speed', 'aperture', 'iso', 'date_captured', 'date_added', 'date_modified', 'file_extension', 'is_image',
+            'has_thumbnail', 'thumbnail_width', 'thumbnail_height'
         ]
     
     def get_image_url(self, obj):

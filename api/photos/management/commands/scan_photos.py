@@ -109,8 +109,17 @@ class Command(BaseCommand):
                         if not dry_run:
                             self.extract_metadata(photo, file_path)
                             photo.save()
+                            
+                            # Generate thumbnail for new photos
+                            if created and photo.is_image:
+                                if photo.generate_thumbnail():
+                                    self.stdout.write(f"Generated thumbnail for: {relative_path}")
+                                else:
+                                    self.stdout.write(f"Failed to generate thumbnail for: {relative_path}")
                         else:
                             self.stdout.write(f"Would extract metadata for: {relative_path}")
+                            if created:
+                                self.stdout.write(f"Would generate thumbnail for: {relative_path}")
                 
                 except Exception as e:
                     error_msg = f"Error processing {file_path}: {str(e)}"

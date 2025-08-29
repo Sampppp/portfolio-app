@@ -131,3 +131,24 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Custom Application Settings
 PHOTOS_PATH = os.environ.get('PHOTOS_PATH', '/app/images')
+
+# Cache Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5 minutes default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
+# Cache middleware (add to top of MIDDLEWARE for best performance)
+MIDDLEWARE.insert(1, 'django.middleware.cache.UpdateCacheMiddleware')
+MIDDLEWARE.append('django.middleware.cache.FetchFromCacheMiddleware')
+
+# Cache settings
+CACHE_MIDDLEWARE_ALIAS = 'default'
+CACHE_MIDDLEWARE_SECONDS = 300  # 5 minutes for pages
+CACHE_MIDDLEWARE_KEY_PREFIX = 'portfolio'

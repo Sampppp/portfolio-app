@@ -11,6 +11,7 @@ from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from .models import Photo, Tag, PhotoScanLog
 from .serializers import (
@@ -119,6 +120,7 @@ class PhotosByTagView(generics.ListAPIView):
 
 
 @api_view(['GET'])
+@cache_page(60 * 5)  # Cache for 5 minutes
 def photo_stats(request):
     """
     Get statistics about the photo collection.
