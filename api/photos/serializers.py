@@ -1,14 +1,16 @@
 """
-creates the translation layer between your Django models and JSON data for your REST API. 
-It defines how your photo data gets converted when sending/receiving API requests.
+Django REST Framework serializers for the photos application.
+
+This module provides serializers that handle the conversion between Django model
+instances and JSON representations for the REST API endpoints.
 """
 
 from rest_framework import serializers
 from .models import Photo, Tag, PhotoScanLog
 
-# Simple JSON representation of tags
+
 class TagSerializer(serializers.ModelSerializer):
-    """Serializer for Tag model."""
+    """Serializer for Tag model with photo count information."""
     photo_count = serializers.SerializerMethodField()
     
     class Meta:
@@ -23,9 +25,13 @@ class TagSerializer(serializers.ModelSerializer):
             return len(obj._prefetched_objects_cache['photos'])
         return obj.photos.count()
 
-# Lightweight version for photo gallery/list views, Basic info needed for photo thumbnails and lists
 class PhotoListSerializer(serializers.ModelSerializer):
-    """Serializer for Photo model in list views (minimal data)."""
+    """
+    Lightweight serializer for Photo model used in list views.
+    
+    Provides minimal data needed for photo thumbnails and gallery displays,
+    optimized for performance when loading multiple photos.
+    """
     tags = TagSerializer(many=True, read_only=True)
     resolution_string = serializers.ReadOnlyField()
     file_extension = serializers.ReadOnlyField()
@@ -50,9 +56,13 @@ class PhotoListSerializer(serializers.ModelSerializer):
         return None
     
 
-# Full photo data for individual photo views
 class PhotoDetailSerializer(serializers.ModelSerializer):
-    """Serializer for Photo model in detail views (full data)."""
+    """
+    Complete serializer for Photo model used in detail views.
+    
+    Provides full photo metadata including EXIF data, camera information,
+    and supports tag management through tag_names field.
+    """
     tags = TagSerializer(many=True, read_only=True)
     tag_names = serializers.ListField(
         child=serializers.CharField(max_length=50),

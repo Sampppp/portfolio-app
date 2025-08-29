@@ -6,7 +6,6 @@ from django.conf import settings
 from photos.models import Photo, PhotoScanLog
 from PIL import Image
 from PIL.ExifTags import TAGS
-import exifread
 
 
 class Command(BaseCommand):
@@ -24,15 +23,30 @@ class Command(BaseCommand):
             action='store_true',
             help='Show what would be done without making changes'
         )
+        parser.add_argument(
+            '--cleanup',
+            action='store_true',
+            default=True,
+            help='Remove database entries for photos that no longer exist in filesystem (default: True)'
+        )
+        parser.add_argument(
+            '--no-cleanup',
+            dest='cleanup',
+            action='store_false',
+            help='Skip cleanup of orphaned database entries'
+        )
 
     def handle(self, *args, **options):
         start_time = time.time()
         scan_path = options['path']
         dry_run = options['dry_run']
+        cleanup = options['cleanup']
         
         self.stdout.write(f"Scanning photos in: {scan_path}")
         if dry_run:
             self.stdout.write("DRY RUN MODE - No changes will be made")
+        if cleanup:
+            self.stdout.write("Cleanup enabled - will remove orphaned database entries")
         
         if not os.path.exists(scan_path):
             self.stdout.write(
@@ -43,10 +57,14 @@ class Command(BaseCommand):
         photos_found = 0
         photos_added = 0
         photos_updated = 0
+        photos_removed = 0
         errors = []
         
+        # Track all valid image files found during scan
+        found_file_paths = set()
+        
         # Supported image extensions
-        image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.raw', '.cr2', '.nef'}
+        image_extensions = {'.jpg', '.jpeg', '.png'}
         
         # Walk through all files in the directory
         for root, dirs, files in os.walk(scan_path):
@@ -62,6 +80,9 @@ class Command(BaseCommand):
                 try:
                     # Get relative path from image folder
                     relative_path = os.path.relpath(file_path, scan_path)
+                    
+                    # Track this file path as found
+                    found_file_paths.add(relative_path)
                     
                     # Check if photo already exists
                     photo, created = Photo.objects.get_or_create(
@@ -96,6 +117,45 @@ class Command(BaseCommand):
                     errors.append(error_msg)
                     self.stdout.write(self.style.ERROR(error_msg))
         
+        # Cleanup orphaned database entries if requested
+        if cleanup:
+            try:
+                # Find photos in database that don't exist in filesystem
+                orphaned_photos = Photo.objects.exclude(file_path__in=found_file_paths)
+                orphaned_count = orphaned_photos.count()
+                
+                if orphaned_count > 0:
+                    self.stdout.write(f"\nFound {orphaned_count} orphaned database entries")
+                    
+                    # Safety check - don't delete everything if no files were found
+                    if len(found_file_paths) == 0 and orphaned_count > 10:
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"Safety check: No files found but {orphaned_count} database entries exist. "
+                                "Skipping cleanup to prevent accidental mass deletion. "
+                                "Check your image path and try again."
+                            )
+                        )
+                    else:
+                        for orphaned_photo in orphaned_photos:
+                            if dry_run:
+                                self.stdout.write(f"Would remove: {orphaned_photo.file_path}")
+                            else:
+                                self.stdout.write(f"Removed: {orphaned_photo.file_path}")
+                                orphaned_photo.delete()
+                        
+                        if not dry_run:
+                            photos_removed = orphaned_count
+                        else:
+                            photos_removed = 0
+                else:
+                    self.stdout.write("No orphaned database entries found")
+                    
+            except Exception as e:
+                error_msg = f"Error during cleanup: {str(e)}"
+                errors.append(error_msg)
+                self.stdout.write(self.style.ERROR(error_msg))
+        
         # Calculate scan duration
         scan_duration = time.time() - start_time
         
@@ -105,6 +165,7 @@ class Command(BaseCommand):
                 photos_found=photos_found,
                 photos_added=photos_added,
                 photos_updated=photos_updated,
+                photos_removed=photos_removed,
                 scan_duration=scan_duration,
                 errors='\n'.join(errors) if errors else None
             )
@@ -116,6 +177,7 @@ class Command(BaseCommand):
                 f"Photos found: {photos_found}\n"
                 f"Photos added: {photos_added}\n"
                 f"Photos updated: {photos_updated}\n"
+                f"Photos removed: {photos_removed}\n"
                 f"Errors: {len(errors)}"
             )
         )
@@ -168,48 +230,6 @@ class Command(BaseCommand):
                                 pass
         
         except Exception as e:
-            # Fallback to exifread for RAW files
-            try:
-                with open(file_path, 'rb') as f:
-                    tags = exifread.process_file(f)
-                    
-                    if 'Image Make' in tags:
-                        photo.camera_name = str(tags['Image Make'])
-                    if 'Image Model' in tags:
-                        if photo.camera_name:
-                            photo.camera_name = f"{photo.camera_name} {tags['Image Model']}"
-                        else:
-                            photo.camera_name = str(tags['Image Model'])
-                    if 'EXIF LensModel' in tags:
-                        photo.lens_name = str(tags['EXIF LensModel'])
-                    if 'EXIF FocalLength' in tags:
-                        focal_length_str = str(tags['EXIF FocalLength'])
-                        if '/' in focal_length_str:
-                            num, den = focal_length_str.split('/')
-                            photo.focal_length = float(num) / float(den)
-                        else:
-                            photo.focal_length = float(focal_length_str)
-                    if 'EXIF ExposureTime' in tags:
-                        photo.shutter_speed = str(tags['EXIF ExposureTime'])
-                    if 'EXIF FNumber' in tags:
-                        f_number_str = str(tags['EXIF FNumber'])
-                        if '/' in f_number_str:
-                            num, den = f_number_str.split('/')
-                            photo.aperture = f"f/{float(num)/float(den):.1f}"
-                        else:
-                            photo.aperture = f"f/{float(f_number_str):.1f}"
-                    if 'EXIF ISOSpeedRatings' in tags:
-                        photo.iso = int(str(tags['EXIF ISOSpeedRatings']))
-                    if 'EXIF DateTimeOriginal' in tags:
-                        try:
-                            photo.date_captured = datetime.strptime(
-                                str(tags['EXIF DateTimeOriginal']), 
-                                '%Y:%m:%d %H:%M:%S'
-                            )
-                        except ValueError:
-                            pass
-            
-            except Exception as inner_e:
-                self.stdout.write(
-                    self.style.WARNING(f"Could not extract metadata from {file_path}: {inner_e}")
-                )
+            self.stdout.write(
+                self.style.WARNING(f"Could not extract metadata from {file_path}: {e}")
+            )

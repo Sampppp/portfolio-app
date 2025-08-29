@@ -6,9 +6,7 @@ from django.db import models
 from django.utils import timezone
 import os
 
-# Simple categorization system for photos
 class Tag(models.Model):
-    """Model for photo tags like 'portrait', 'landscape', etc."""
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self): # tags display as their name in admin interface
@@ -17,7 +15,6 @@ class Tag(models.Model):
     class Meta: # sorts tags alphabetically
         ordering = ['name']
 
-# Stores comprehensive metadata about each photo file
 class Photo(models.Model):
     """Model for storing photo metadata and information."""
     
@@ -83,6 +80,7 @@ class PhotoScanLog(models.Model):
     photos_found = models.IntegerField(default=0)
     photos_added = models.IntegerField(default=0)
     photos_updated = models.IntegerField(default=0)
+    photos_removed = models.IntegerField(default=0)
     scan_duration = models.FloatField(help_text="Scan duration in seconds")
     errors = models.TextField(blank=True, null=True)
     
