@@ -1,18 +1,25 @@
-# `admin.py` Photos Admin Configuration
+# Admin Configuration - Photos App
 
 ## Overview
 
-The `api/photos/admin.py` file configures Django's administrative interface for the photos application. It creates user-friendly administrative panels that allow administrators to manage photos, tags, and scan logs through Django's built-in admin interface. This file customizes how each model appears and behaves in the admin panel, providing efficient tools for content management.
+The `api/photos/admin.py` file configures Django's administrative interface for the photos application. This file is part of the [Photos API Documentation](../api/photos/README.md) and provides user-friendly administrative panels for managing photos, tags, and scan logs.
 
-## Purpose within the Django REST API Project
+## Purpose
 
-This admin configuration serves as the backend management interface for the photo portfolio system. While the REST API endpoints handle programmatic access to photo data, the admin interface provides a web-based GUI for:
+This admin configuration serves as the backend management interface for the photo portfolio system, providing:
 
-- Manual photo metadata management
-- Tag organization and categorization
-- Monitoring automated photo scanning operations
-- Bulk operations on photo collections
-- System maintenance and troubleshooting
+- **Manual Photo Management**: Direct photo metadata editing and organization
+- **Tag Organization**: Categorization system management
+- **Scan Monitoring**: Automated photo scanning operation tracking
+- **Bulk Operations**: Efficient bulk photo collection management
+- **System Maintenance**: Troubleshooting and system health monitoring
+
+## Integration
+
+This admin interface integrates with:
+- [Photo Models](models.md) - Data structures being managed
+- [Photo Views](views.md) - API endpoints for programmatic access
+- [Photo Serializers](serializers.md) - Data transformation layer
 
 ## Admin Classes
 

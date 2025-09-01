@@ -24,7 +24,7 @@ services:
       PHOTOS_PATH: /app/images
     volumes:
       - ./api:/app
-      - /home/spak22/portfolio-app/images:/app/images:ro  # Update this path image folder
+      - /home/spak/portfolio-app/images:/app/images:ro  # Update this path image folder
     depends_on:
       - postgres
     networks:
