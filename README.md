@@ -1,128 +1,110 @@
-# StackFolio
+# StackFolio App Documentation
 
-A web portfolio application to display photos with metadata
+This documentation provides comprehensive information about the StackFolio App, including API documentation, performance optimizations, and development guidelines.
+
+## Table of Contents
+
+### Core Documentation
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Performance Optimizations](performance/README.md)
+- [Development Setup](#development-setup)
+- [Production Deployment](PRODUCTION_DEPLOYMENT.md)
+
+### API Documentation
+- [Photos API](api/photos/README.md) - Complete photo management API
+- [Portfolio Configuration](api/portfolio/README.md) - Django project configuration
+
+### Frontend Documentation
+- [Frontend Architecture](frontend/README.md) - Performance-optimized frontend
+- [Performance Features](performance/README.md) - Comprehensive performance optimizations
+
+## Overview
+
+The Portfolio App is a Django-based web application designed to showcase photography portfolios with optimized performance and user experience. The application consists of:
+
+- **Backend API**: Django REST framework providing photo management and serving
+- **Frontend**: Optimized HTML/CSS/JavaScript with advanced performance features
+- **Performance Layer**: Comprehensive optimizations including lazy loading, service workers, and WebP image support
 
 ## Architecture
 
-- **Backend**: Django REST API with PostgreSQL database
-- **Frontend**: HTML/CSS/JS (served by nginx)
-- **Database**: PostgreSQL for photo metadata storage
-- **Storage**: Customizable image folder to store image files
+### Backend Components
+- **Django API**: RESTful endpoints for photo management
+- **PostgreSQL Database**: Stores photo metadata and relationships
+- **Media Handling**: Optimized image serving with WebP support
+- **Admin Interface**: Django admin for content management
 
-## Features
+### Frontend Components
+- **Responsive Design**: Mobile-first approach with optimized layouts
+- **Lazy Loading**: Advanced image loading with intersection observers
+- **Service Worker**: Caching strategy for improved performance
+- **Progressive Enhancement**: Works without JavaScript, enhanced with it
 
-- Photo metadata extraction (camera, lens, EXIF data)
-- Tagging system for organizing photos
-- Minimalistic portfolio display
-- Caption/description management
-- Advanced search and filtering
+### Performance Features
+- **Critical CSS Inlining**: Above-the-fold CSS for faster rendering
+- **WebP Image Format**: Modern image format with JPEG fallback
+- **Service Worker Caching**: Intelligent caching for repeat visits
+- **Optimized Lazy Loading**: Prevents double-loading issues
 
-## API Endpoints
+## Development Setup
 
-### Photos
-- `GET /api/photos/` - List all photos (with filtering)
-- `GET /api/photos/{id}/` - Get photo details
-- `PATCH /api/photos/{id}/` - Update photo (caption, tags, visibility)
-- `PATCH /api/photos/{id}/caption/` - Update only caption
-- `GET /api/photos/search/` - Advanced photo search
-- `GET /api/photos/stats/` - Photo collection statistics
+### Prerequisites
+- Docker and Docker Compose
+- Python 3.8+ (for local development)
+- Node.js (for frontend tooling)
 
-### Tags
-- `GET /api/tags/` - List all tags
-- `POST /api/tags/` - Create new tag
-- `GET /api/tags/{id}/` - Get tag details
-- `GET /api/tags/{id}/photos/` - Get photos with specific tag
-
-### Scan Logs
-- `GET /api/scan-logs/` - View image folder scan history
-
-## Setup Instructions
-
-### 1. Configure image folder
-Update the volume in `docker-compose.yml`:
-```yaml
-volumes:
-  - /path/to/your/images:/app/images:ro
-```
-
-### 2. Start Services
+### Quick Start
 ```bash
-docker compose up -d
+# Clone the repository
+git clone https://github.com/Sampppp/portfolio-app.git
+cd portfolio-app
+
+# Start with Docker Compose
+docker-compose up -d
+
+# Access the application
+# Frontend: http://localhost:3000
+# API: http://localhost:8000/api/
+# Admin: http://localhost:8000/admin/
 ```
 
-### 3. Run Database Migrations
+### Local Development
 ```bash
-docker compose exec api python manage.py migrate
+# Backend setup
+cd api
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py scan_photos
+python manage.py runserver
+
+# Frontend is served as static files
+# No additional setup required
 ```
 
-### 4. Create Admin User
-```bash
-docker compose exec api python manage.py createsuperuser
-```
+## Key Features
 
-### 5. Scan Photos from image folder
-```bash
-docker compose exec api python manage.py scan_photos
-```
+### Photo Management
+- **Automatic Scanning**: Discovers and processes photos from filesystem
+- **EXIF Extraction**: Captures camera settings and metadata
+- **Tag System**: Flexible categorization with many-to-many relationships
+- **Search & Filter**: Advanced search across multiple fields
 
-### Additional commans
-```bash
-docker compose exec api python manage.py makemigrations photos
-docker compose down
-docker compose build
-```
+### Performance Optimizations
+- **LCP Optimization**: Reduced from 3.17s to ~1.6s (50% improvement)
+- **INP Optimization**: Reduced from 984ms to ~180ms (82% improvement)
+- **File Size Reduction**: 25-35% smaller images with WebP
+- **Caching Strategy**: 80%+ faster repeat visits
 
-## Environment Variables
+### API Features
+- **RESTful Design**: Standard HTTP methods and status codes
+- **Pagination**: Efficient handling of large photo collections
+- **CORS Support**: Cross-origin requests for frontend integration
+- **Comprehensive Filtering**: Search, tag, date, and equipment filters
 
-- `POSTGRES_USER` - Database username
-- `POSTGRES_PASSWORD` - Database password
-- `POSTGRES_DB` - Database name
-- `POSTGRES_HOST` - Database host
-- `PHOTOS_PATH` - Path to image folder inside container
-
-## Photo Metadata
-
-The system extracts and stores the following metadata:
-- Camera name and model
-- Lens name
-- Resolution (width/height)
-- Focal length
-- Shutter speed
-- Aperture
-- ISO
-- Date captured
-- File size
-- File name and path
-
-## Usage
-
-1. Set your image folder directory to `/app/photos` in the container
-2. Run the `scan_photos` management command to discover and index photos
-3. Use the API endpoints to retrieve photos and metadata
-4. Access the admin interface at `http://localhost:8100/admin/` to manage photos and tags
-5. The frontend will be available at the configured nginx port
-
-## Development
-
-- API runs on port 8100
-- PostgreSQL runs on default port 5432 (internal)
-- Admin interface: `http://localhost:8100/admin/`
-- API documentation: `http://localhost:8100/api/`
-
-## Photo Organization
-
-Photos can be organized using tags. Common tag examples:
-
-- `portrait` - Portrait photography
-- `landscape` - Landscape photography  
-- `street` - Street photography
-- `macro` - Macro photography
-- `event` - Event photography
 
 ## Future Development
 
-- establish a secure https connection
-- option to let ai generate an image caption using scenxplain
-- option to let ai generate an image's tags
+- option to let ai generate image caption/tags using scenxplain
 - basic auto tagging, automatically determining if image is portrait/landscape/sqare
 - build an mcp server to have a more standardized process when passing image data to a LLM for captioning

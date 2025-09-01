@@ -1,14 +1,16 @@
 """
-creates the translation layer between your Django models and JSON data for your REST API. 
-It defines how your photo data gets converted when sending/receiving API requests.
+Django REST Framework serializers for the photos application.
+
+This module provides serializers that handle the conversion between Django model
+instances and JSON representations for the REST API endpoints.
 """
 
 from rest_framework import serializers
 from .models import Photo, Tag, PhotoScanLog
 
-# Simple JSON representation of tags
+
 class TagSerializer(serializers.ModelSerializer):
-    """Serializer for Tag model."""
+    """Serializer for Tag model with photo count information."""
     photo_count = serializers.SerializerMethodField()
     
     class Meta:
@@ -23,22 +25,31 @@ class TagSerializer(serializers.ModelSerializer):
             return len(obj._prefetched_objects_cache['photos'])
         return obj.photos.count()
 
-# Lightweight version for photo gallery/list views, Basic info needed for photo thumbnails and lists
 class PhotoListSerializer(serializers.ModelSerializer):
-    """Serializer for Photo model in list views (minimal data)."""
+    """
+    Lightweight serializer for Photo model used in list views.
+    
+    Provides minimal data needed for photo thumbnails and gallery displays,
+    optimized for performance when loading multiple photos.
+    """
     tags = TagSerializer(many=True, read_only=True)
     resolution_string = serializers.ReadOnlyField()
     file_extension = serializers.ReadOnlyField()
     image_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
+    thumbnail_webp_url = serializers.SerializerMethodField()
+    thumbnail_jpeg_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Photo
         fields = [
             'id', 'file_name', 'file_path', 'file_size', 'resolution_width', 'resolution_height', 'date_captured', 'date_added', 'file_extension', 
-            'caption', 'tags', 'resolution_string', 'image_url'
+            'caption', 'tags', 'resolution_string', 'image_url', 'thumbnail_url', 'thumbnail_webp_url', 'thumbnail_jpeg_url', 
+            'has_thumbnail', 'thumbnail_width', 'thumbnail_height'
         ]
         read_only_fields = [
-            'id', 'file_name', 'file_path', 'file_size', 'resolution_width', 'resolution_height', 'date_captured', 'date_added', 'file_extension'
+            'id', 'file_name', 'file_path', 'file_size', 'resolution_width', 'resolution_height', 'date_captured', 'date_added', 'file_extension',
+            'has_thumbnail', 'thumbnail_width', 'thumbnail_height'
         ]
     
     def get_image_url(self, obj):
@@ -49,10 +60,36 @@ class PhotoListSerializer(serializers.ModelSerializer):
             return f"/media/{file_path}"
         return None
     
+    def get_thumbnail_url(self, obj):
+        """Return the primary thumbnail URL (WebP preferred, JPEG fallback)."""
+        if obj.has_thumbnail and obj.thumbnail_path:
+            return f"/media/{obj.thumbnail_path.lstrip('/')}"
+        return None
+    
+    def get_thumbnail_webp_url(self, obj):
+        """Return WebP thumbnail URL if available."""
+        if obj.has_thumbnail and obj.thumbnail_path:
+            base_name = obj.file_name.split('.')[0]
+            webp_path = f"thumbnails/{base_name}_thumb.webp"
+            return f"/media/{webp_path}"
+        return None
+    
+    def get_thumbnail_jpeg_url(self, obj):
+        """Return JPEG thumbnail URL as fallback."""
+        if obj.has_thumbnail and obj.thumbnail_path:
+            base_name = obj.file_name.split('.')[0]
+            jpeg_path = f"thumbnails/{base_name}_thumb.jpg"
+            return f"/media/{jpeg_path}"
+        return None
+    
 
-# Full photo data for individual photo views
 class PhotoDetailSerializer(serializers.ModelSerializer):
-    """Serializer for Photo model in detail views (full data)."""
+    """
+    Complete serializer for Photo model used in detail views.
+    
+    Provides full photo metadata including EXIF data, camera information,
+    and supports tag management through tag_names field.
+    """
     tags = TagSerializer(many=True, read_only=True)
     tag_names = serializers.ListField(
         child=serializers.CharField(max_length=50),
@@ -64,15 +101,17 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
     file_extension = serializers.ReadOnlyField()
     is_image = serializers.ReadOnlyField()
     image_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.ReadOnlyField()
     
     class Meta:
         model = Photo
         fields = [
             'id', 'file_name', 'file_path', 'file_size', 'camera_name', 'lens_name', 'resolution_width', 'resolution_height', 'focal_length', 'shutter_speed', 'aperture', 'iso', 'date_captured', 'date_added', 'date_modified', 'file_extension', 'is_image',
-            'resolution_string', 'caption', 'tags', 'tag_names', 'image_url'
+            'resolution_string', 'caption', 'tags', 'tag_names', 'image_url', 'thumbnail_url', 'has_thumbnail', 'thumbnail_width', 'thumbnail_height'
         ]
         read_only_fields = [
-            'id', 'file_name', 'file_path', 'file_size', 'camera_name', 'lens_name', 'resolution_width', 'resolution_height', 'focal_length', 'shutter_speed', 'aperture', 'iso', 'date_captured', 'date_added', 'date_modified', 'file_extension', 'is_image'
+            'id', 'file_name', 'file_path', 'file_size', 'camera_name', 'lens_name', 'resolution_width', 'resolution_height', 'focal_length', 'shutter_speed', 'aperture', 'iso', 'date_captured', 'date_added', 'date_modified', 'file_extension', 'is_image',
+            'has_thumbnail', 'thumbnail_width', 'thumbnail_height'
         ]
     
     def get_image_url(self, obj):

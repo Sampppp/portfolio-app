@@ -7,8 +7,12 @@ It's the "controller" layer that connects your models (database) and serializers
 from rest_framework import generics, status, filters
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from .models import Photo, Tag, PhotoScanLog
 from .serializers import (
     PhotoListSerializer, PhotoDetailSerializer, PhotoCaptionSerializer,
@@ -55,6 +59,7 @@ class PhotoListView(generics.ListAPIView):
         return queryset
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class PhotoDetailView(generics.RetrieveUpdateAPIView):
     """
     Retrieve or update a specific photo.
@@ -64,16 +69,20 @@ class PhotoDetailView(generics.RetrieveUpdateAPIView):
     """
     queryset = Photo.objects.filter()
     serializer_class = PhotoDetailSerializer
+    permission_classes = [AllowAny]
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class PhotoCaptionView(generics.UpdateAPIView):
     """
     Update only the caption of a specific photo.
     """
     queryset = Photo.objects.filter()
     serializer_class = PhotoCaptionSerializer
+    permission_classes = [AllowAny]
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class TagListView(generics.ListCreateAPIView):
     """
     List all tags or create a new tag.
@@ -84,14 +93,17 @@ class TagListView(generics.ListCreateAPIView):
     queryset = Tag.objects.all().prefetch_related('photos')
     serializer_class = TagSerializer
     ordering = ['name']
+    permission_classes = [AllowAny]
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class TagDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, update, or delete a specific tag.
     """
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    permission_classes = [AllowAny]
 
 
 class PhotosByTagView(generics.ListAPIView):
@@ -108,6 +120,7 @@ class PhotosByTagView(generics.ListAPIView):
 
 
 @api_view(['GET'])
+@cache_page(60 * 5)  # Cache for 5 minutes
 def photo_stats(request):
     """
     Get statistics about the photo collection.

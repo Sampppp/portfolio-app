@@ -6,7 +6,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-urlpatterns = [ # when a request comes in, figure out which view should handle it
+urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('photos.urls')),
 ]

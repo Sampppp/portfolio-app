@@ -17,7 +17,34 @@ document.addEventListener('DOMContentLoaded', function() {
     loadPhotos();
     loadTags();
     setupInfiniteScroll();
+    setupLazyLoading();
+    registerServiceWorker();
 });
+
+// Service Worker Registration
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('Service Worker registered successfully:', registration);
+                
+                // Check for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New service worker available
+                            console.log('New service worker available');
+                            showToast('App updated! Refresh to get the latest version.', 'info');
+                        }
+                    });
+                });
+            })
+            .catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+    }
+}
 
 // Utility Functions
 function showToast(message, type = 'info') {
@@ -188,12 +215,23 @@ function appendPhotos(photos) {
 }
 
 function createPhotoCard(photo) {
+    // Use WebP with JPEG fallback for optimal performance
+    const webpUrl = photo.thumbnail_webp_url;
+    const jpegUrl = photo.thumbnail_jpeg_url;
+    const fallbackUrl = photo.thumbnail_url || photo.image_url;
+    
     return `
         <div class="col-md-4 col-lg-3 mb-4">
-            <div class="photo-card-clean" onclick="showPhotoDetail(${photo.id})">
-                ${photo.image_url ? `
-                    <img src="${photo.image_url}" alt="${photo.file_name}" class="photo-thumbnail-clean" 
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="photo-card-clean" onclick="showPhotoDetail(${photo.id})" data-photo-id="${photo.id}">
+                ${webpUrl || jpegUrl || fallbackUrl ? `
+                    <picture>
+                        ${webpUrl ? `<source data-srcset="${webpUrl}" type="image/webp">` : ''}
+                        <img alt="${photo.file_name}" class="photo-thumbnail-clean lazy-image" 
+                             data-src="${jpegUrl || fallbackUrl}"
+                             width="300" height="250"
+                             style="background-color: #f8f9fa;"
+                             onerror="this.style.display='none'; this.closest('.photo-card-clean').querySelector('.photo-placeholder-clean').style.display='flex';">
+                    </picture>
                     <div class="photo-placeholder-clean" style="display: none;">
                         <i class="bi bi-image"></i>
                     </div>
@@ -202,6 +240,11 @@ function createPhotoCard(photo) {
                         <i class="bi bi-image"></i>
                     </div>
                 `}
+                <div class="photo-loading-overlay">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -240,23 +283,50 @@ function setupInfiniteScroll() {
 }
 
 // Photo Detail Functions
+let modalLoadingTimeout = null;
+
 async function showPhotoDetail(photoId) {
+    // Debounce rapid clicks
+    if (modalLoadingTimeout) {
+        clearTimeout(modalLoadingTimeout);
+    }
+    
     currentPhotoId = photoId;
     
-    try {
-        const response = await fetch(`${API_BASE}/photos/${photoId}/`);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    // Show modal immediately with loading state
+    const modal = new bootstrap.Modal(document.getElementById('photoModal'));
+    const modalBody = document.getElementById('photo-modal-body');
+    
+    modalBody.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading photo details...</span>
+            </div>
+            <p class="mt-3">Loading photo details...</p>
+        </div>
+    `;
+    
+    modal.show();
+    
+    modalLoadingTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch(`${API_BASE}/photos/${photoId}/`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const photo = await response.json();
+            displayPhotoDetail(photo);
+        } catch (error) {
+            modalBody.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Error loading photo details: ${error.message}
+                </div>
+            `;
+            showToast(`Error loading photo details: ${error.message}`, 'error');
         }
-        
-        const photo = await response.json();
-        displayPhotoDetail(photo);
-        
-        const modal = new bootstrap.Modal(document.getElementById('photoModal'));
-        modal.show();
-    } catch (error) {
-        showToast(`Error loading photo details: ${error.message}`, 'error');
-    }
+    }, 50); // Small delay to prevent rapid API calls
 }
 
 function displayPhotoDetail(photo) {
@@ -757,3 +827,136 @@ function displayScanLogs(logs) {
         </div>
     `).join('');
 }
+
+// Lazy Loading Implementation
+let imageObserver = null;
+let prefetchObserver = null;
+
+function setupLazyLoading() {
+    // Check if Intersection Observer is supported
+    if ('IntersectionObserver' in window) {
+        // Main lazy loading observer
+        imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const photoCard = img.closest('.photo-card-clean');
+                    const loadingOverlay = photoCard?.querySelector('.photo-loading-overlay');
+                    const picture = img.closest('picture');
+                    
+                    // Load the image with WebP support
+                    const src = img.getAttribute('data-src');
+                    if (src) {
+                        // Handle picture element with WebP sources
+                        if (picture) {
+                            const webpSource = picture.querySelector('source[data-srcset]');
+                            if (webpSource) {
+                                const webpSrc = webpSource.getAttribute('data-srcset');
+                                webpSource.srcset = webpSrc;
+                                webpSource.removeAttribute('data-srcset');
+                            }
+                        }
+                        
+                        // Create a new image to preload
+                        const newImg = new Image();
+                        newImg.onload = () => {
+                            img.src = src;
+                            img.classList.add('loaded');
+                            if (loadingOverlay) {
+                                loadingOverlay.style.display = 'none';
+                            }
+                        };
+                        newImg.onerror = () => {
+                            if (loadingOverlay) {
+                                loadingOverlay.style.display = 'none';
+                            }
+                            img.style.display = 'none';
+                            const placeholder = photoCard?.querySelector('.photo-placeholder-clean');
+                            if (placeholder) {
+                                placeholder.style.display = 'flex';
+                            }
+                        };
+                        newImg.src = src;
+                        img.removeAttribute('data-src');
+                    }
+                    
+                    // Stop observing this image
+                    observer.unobserve(img);
+                }
+            });
+        }, {
+            // Load images when they're 50px away from entering the viewport
+            rootMargin: '50px 0px',
+            threshold: 0.01
+        });
+        
+        // Prefetch observer for images further away
+        prefetchObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const src = img.getAttribute('data-src');
+                    if (src) {
+                        // Prefetch the image
+                        const link = document.createElement('link');
+                        link.rel = 'prefetch';
+                        link.href = src;
+                        document.head.appendChild(link);
+                    }
+                    observer.unobserve(img);
+                }
+            });
+        }, {
+            // Prefetch images when they're 200px away from entering the viewport
+            rootMargin: '200px 0px',
+            threshold: 0.01
+        });
+        
+        // Observe existing lazy images
+        observeLazyImages();
+    } else {
+        // Fallback for browsers without Intersection Observer
+        loadAllImages();
+    }
+}
+
+function observeLazyImages() {
+    const lazyImages = document.querySelectorAll('.lazy-image[data-src]');
+    lazyImages.forEach(img => {
+        if (imageObserver) {
+            imageObserver.observe(img);
+        }
+        if (prefetchObserver) {
+            prefetchObserver.observe(img);
+        }
+    });
+}
+
+function loadAllImages() {
+    // Fallback: load all images immediately
+    const lazyImages = document.querySelectorAll('.lazy-image[data-src]');
+    lazyImages.forEach(img => {
+        const src = img.getAttribute('data-src');
+        if (src) {
+            img.src = src;
+            img.removeAttribute('data-src');
+            img.classList.add('loaded');
+        }
+    });
+}
+
+// Update displayPhotos and appendPhotos to setup lazy loading for new images
+const originalDisplayPhotos = displayPhotos;
+const originalAppendPhotos = appendPhotos;
+
+displayPhotos = function(photos) {
+    originalDisplayPhotos(photos);
+    // Setup lazy loading for new images immediately
+    requestAnimationFrame(() => observeLazyImages());
+};
+
+appendPhotos = function(photos) {
+    originalAppendPhotos(photos);
+    // Setup lazy loading for new images immediately
+    requestAnimationFrame(() => observeLazyImages());
+};
