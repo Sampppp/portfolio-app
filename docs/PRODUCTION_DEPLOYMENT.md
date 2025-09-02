@@ -127,10 +127,7 @@ SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [
-    "https://yourdomain.com",
-    "https://www.yourdomain.com",
-]
+CORS_ALLOWED_ORIGINS = ["https://thisguyisreallycool.sp4k.live"]
 CORS_ALLOW_CREDENTIALS = True
 
 # Session Security

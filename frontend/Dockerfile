@@ -1,17 +1,17 @@
-# Use nginx as base image
 FROM nginx:alpine
 
 # Remove default nginx website
-RUN rm -rf /usr/share/nginx/html/*
+RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy our static files
-COPY src/ /usr/share/nginx/html/
+# Copy nginx configuration
+COPY ./nginx/nginx.conf /etc/nginx/conf.d/
 
-# Copy our nginx configuration
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+# Create directories
+RUN mkdir -p /etc/nginx/ssl
 
-# Expose port 80
-EXPOSE 80
+# Copy frontend files to nginx document root
+COPY ./src/ /usr/share/nginx/html/
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Copy SSL certificates (you'll need to provide these)
+# COPY cert.pem /etc/nginx/ssl/
+# COPY key.pem /etc/nginx/ssl/

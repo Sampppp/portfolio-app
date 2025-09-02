@@ -57,7 +57,7 @@ class PhotoListSerializer(serializers.ModelSerializer):
         if obj.file_path and obj.is_image:
             # Remove leading slash if present to avoid double slashes
             file_path = obj.file_path.lstrip('/')
-            return f"/media/{file_path}"
+            return f"/media/images/{file_path}"
         return None
     
     def get_thumbnail_url(self, obj):
@@ -119,7 +119,7 @@ class PhotoDetailSerializer(serializers.ModelSerializer):
         if obj.file_path and obj.is_image:
             # Remove leading slash if present to avoid double slashes
             file_path = obj.file_path.lstrip('/')
-            return f"/media/{file_path}"
+            return f"/media/images/{file_path}"
         return None
     
     def update(self, instance, validated_data):

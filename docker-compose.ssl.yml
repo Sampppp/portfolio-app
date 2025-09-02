@@ -1,12 +1,12 @@
+
 services:
   web:
     build: 
       context: ./api
-    command: gunicorn portfolio.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    command: /bin/sh -c "ln -sf /mnt/nas/images /app/media/images 2>/dev/null || true; gunicorn portfolio.wsgi:application --bind 0.0.0.0:8000 --workers 3"
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-      - ./logs:/app/logs
       - /mnt/nas/images:/mnt/nas/images
     environment:
       - DJANGO_SETTINGS_MODULE=portfolio.settings
@@ -25,9 +25,20 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-      - ./ssl:/etc/nginx/ssl
+      - /mnt/nas/images:/mnt/nas/images
+      - ./ssl/certbot/conf:/etc/letsencrypt
+      - ./ssl/certbot/www:/var/www/certbot
+      - ./frontend/nginx/nginx-ssl.conf:/etc/nginx/conf.d/nginx.conf
     depends_on:
       - web
+    command: "/bin/sh -c 'ln -sf /mnt/nas/images /app/media/images 2>/dev/null || true; while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./ssl/certbot/conf:/etc/letsencrypt
+      - ./ssl/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
   db:
     image: postgres:15
